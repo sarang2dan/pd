@@ -19,9 +19,9 @@ import (
 
 	log "github.com/pingcap/log"
 	"github.com/pingcap/pd/pkg/typeutil"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/push"
-	"go.uber.org/zap"
+	_ "github.com/prometheus/client_golang/prometheus"
+	_ "github.com/prometheus/client_golang/prometheus/push"
+	_ "go.uber.org/zap"
 )
 
 const zeroDuration = time.Duration(0)
@@ -60,18 +60,19 @@ func camelCaseToSnakeCase(str string) string {
 
 // prometheusPushClient pushs metrics to Prometheus Pushgateway.
 func prometheusPushClient(job, addr string, interval time.Duration) {
-	for {
-		err := push.FromGatherer(
-			job, push.HostnameGroupingKey(),
-			addr,
-			prometheus.DefaultGatherer,
-		)
-		if err != nil {
-			log.Error("could not push metrics to Prometheus Pushgateway", zap.Error(err))
-		}
+  // TODO: rewrite code using push.New() ( reference github #600 issue)
+	//for {
+	//	err := push.FromGatherer(
+	//		job, push.HostnameGroupingKey(),
+	//		addr,
+	//		prometheus.DefaultGatherer,
+	//	)
+	//	if err != nil {
+	//		log.Error("could not push metrics to Prometheus Pushgateway", zap.Error(err))
+	//	}
 
-		time.Sleep(interval)
-	}
+	//	time.Sleep(interval)
+	//}
 }
 
 // Push metircs in background.
