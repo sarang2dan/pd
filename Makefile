@@ -32,18 +32,18 @@ ci: build check basic_test
 
 build:
 ifeq ("$(WITH_RACE)", "1")
-	CGO_ENABLED=1 go build -race -ldflags '$(LDFLAGS)' -o bin/pd-server cmd/pd-server/main.go
+	go build -race -ldflags '$(LDFLAGS)' -o bin/pd-server cmd/pd-server/main.go
 else
-	CGO_ENABLED=0 go build -ldflags '$(LDFLAGS)' -o bin/pd-server cmd/pd-server/main.go
+	go build -ldflags '$(LDFLAGS)' -o bin/pd-server cmd/pd-server/main.go
 endif
-	CGO_ENABLED=0 go build -ldflags '$(LDFLAGS)' -o bin/pd-ctl tools/pd-ctl/main.go
-	CGO_ENABLED=0 go build -o bin/pd-tso-bench tools/pd-tso-bench/main.go
-	CGO_ENABLED=0 go build -o bin/pd-recover tools/pd-recover/main.go
+	go build -ldflags '$(LDFLAGS)' -o bin/pd-ctl tools/pd-ctl/main.go
+	go build -o bin/pd-tso-bench tools/pd-tso-bench/main.go
+	go build -o bin/pd-recover tools/pd-recover/main.go
 
 test: retool-setup
 	# testing..
 	@$(GOFAIL_ENABLE)
-	CGO_ENABLED=1 go test -race -cover $(TEST_PKGS) || { $(GOFAIL_DISABLE); exit 1; }
+	go test -race -cover $(TEST_PKGS) || { $(GOFAIL_DISABLE); exit 1; }
 	@$(GOFAIL_DISABLE)
 
 basic_test:
@@ -53,10 +53,10 @@ basic_test:
 
 # These need to be fixed before they can be ran regularly
 check-fail:
-	CGO_ENABLED=0 ./hack/retool do gometalinter.v2 --disable-all \
+	./hack/retool do gometalinter.v2 --disable-all \
 	  --enable errcheck \
 	  $$($(PACKAGE_DIRECTORIES))
-	CGO_ENABLED=0 ./hack/retool do gosec $$($(PACKAGE_DIRECTORIES))
+	./hack/retool do gosec $$($(PACKAGE_DIRECTORIES))
 
 check-all: static lint
 	@echo "checking"
@@ -72,7 +72,7 @@ static:
 	gofmt -s -l $$($(PACKAGE_DIRECTORIES)) 2>&1 | $(GOCHECKER)
 	./hack/retool do govet --shadow $$($(PACKAGE_DIRECTORIES)) 2>&1 | $(GOCHECKER)
 
-	CGO_ENABLED=0 ./hack/retool do gometalinter.v2 --disable-all --deadline 240s \
+	./hack/retool do gometalinter.v2 --disable-all --deadline 240s \
 	  --enable misspell \
 	  --enable staticcheck \
 	  --enable ineffassign \
@@ -80,7 +80,7 @@ static:
 
 lint:
 	@echo "linting"
-	CGO_ENABLED=0 ./hack/retool do revive -formatter friendly -config revive.toml $$($(PACKAGES))
+	./hack/retool do revive -formatter friendly -config revive.toml $$($(PACKAGES))
 
 travis_coverage:
 ifeq ("$(TRAVIS_COVERAGE)", "1")
@@ -101,7 +101,7 @@ endif
 	bash ./hack/clean_vendor.sh
 
 simulator:
-	CGO_ENABLED=0 go build -o bin/pd-simulator tools/pd-simulator/main.go
+	go build -o bin/pd-simulator tools/pd-simulator/main.go
 
 gofail-enable:
 	# Converting gofail failpoints...

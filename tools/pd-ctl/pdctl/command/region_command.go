@@ -53,6 +53,7 @@ func NewRegionCommand() *cobra.Command {
 	r.AddCommand(NewRegionWithCheckCommand())
 	r.AddCommand(NewRegionWithSiblingCommand())
 	r.AddCommand(NewRegionWithStoreCommand())
+	r.AddCommand(NewRegionFlatText())
 
 	topRead := &cobra.Command{
 		Use:   "topread <limit>",
@@ -93,6 +94,24 @@ func NewRegionCommand() *cobra.Command {
 	return r
 }
 
+func showRegionCommandWithFlatText(cmd *cobra.Command, args []string) {
+	prefix := regionsPrefix
+	if len(args) != 0 {
+		if _, err := strconv.Atoi(args[0]); err != nil {
+			fmt.Println("Error: %+v", args)
+			return
+		}
+	}
+
+	r, err := doRequest(cmd, prefix, http.MethodGet)
+	if err != nil {
+		fmt.Printf("Failed to get region: %s\n", err)
+		return
+	}
+
+	fmt.Println(r)
+}
+
 func showRegionCommandFunc(cmd *cobra.Command, args []string) {
 	prefix := regionsPrefix
 	if len(args) == 1 {
@@ -107,12 +126,14 @@ func showRegionCommandFunc(cmd *cobra.Command, args []string) {
 		fmt.Printf("Failed to get region: %s\n", err)
 		return
 	}
-	if flag := cmd.Flag("jq"); flag != nil && flag.Value.String() != "" {
-		printWithJQFilter(r, flag.Value.String())
-		return
+
+	flagStr := ""
+	flag := cmd.Flag("jq")
+	if flag != nil {
+		flagStr = flag.Value.String()
 	}
 
-	fmt.Println(r)
+	printWithJQFilter(r, flagStr)
 }
 
 func showRegionTopWriteCommandFunc(cmd *cobra.Command, args []string) {
@@ -208,6 +229,17 @@ func NewRegionWithKeyCommand() *cobra.Command {
 		Run:   showRegionWithTableCommandFunc,
 	}
 	r.Flags().String("format", "raw", "the key format")
+	return r
+}
+
+// NewRegionWithKeyCommand return a region with key subcommand of regionCmd
+func NewRegionFlatText() *cobra.Command {
+	r := &cobra.Command{
+		Use:   "flat",
+		Short: "print all region with flat text",
+		Run:   showRegionCommandWithFlatText,
+	}
+	r.Flags().Bool("flat", true, "flat text print")
 	return r
 }
 
@@ -358,7 +390,12 @@ func showRegionWithStoreCommandFunc(cmd *cobra.Command, args []string) {
 }
 
 func printWithJQFilter(data, filter string) {
-	cmd := exec.Command("jq", "-c", filter)
+	var cmd * exec.Cmd
+	if filter == "" {
+		cmd = exec.Command("jq")
+	} else {
+		cmd = exec.Command("jq", "-c", filter)
+	}
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		fmt.Println(err)
